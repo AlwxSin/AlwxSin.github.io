@@ -1,0 +1,555 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+	<title>Как работать с api соцсетей без боли</title>
+
+	<link rel="stylesheet" href="css/reset.css">
+	<link rel="stylesheet" href="css/reveal.css">
+	<!--<link rel="stylesheet" href="css/theme/solarized.css" id="theme">-->
+	<!--<link rel="stylesheet" href="css/theme/black.css" id="theme">-->
+	<link rel="stylesheet" href="css/theme/night.css" id="theme">
+
+	<!-- Theme used for syntax highlighting of code -->
+	<link rel="stylesheet" href="lib/css/monokai.css">
+	<!--<link rel="stylesheet" href="lib/css/zenburn.css">-->
+
+	<!-- Printing and PDF exports -->
+	<script>
+		var link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.type = 'text/css';
+		link.href = window.location.search.match(/print-pdf/gi) ? 'css/print/pdf.css' : 'css/print/paper.css';
+		document.getElementsByTagName('head')[0].appendChild(link);
+	</script>
+</head>
+<body>
+
+<a href="https://career.usetech.ru" target="_blank" style="position: absolute; left: 10px; bottom: 20px; z-index: 99">
+	<img src="img/dev.pro/usetech-logo-white.svg" style="width: 160px; height: auto;">
+</a>
+
+<div class="reveal">
+	<div class="slides">
+		<section>
+			<h3>Синичкин Александр</h3>
+			<p>Python dev lead</p>
+			<p>Usetech Integrations</p>
+		</section>
+
+		<section>
+			<section>
+				<h2>Как работать с api соцсетей без боли</h2>
+				<span class="fragment"><p>Спойлер: никак</p></span>
+			</section>
+		</section>
+
+		<section>
+			<section><h3>Наш кейс</h3></section>
+			<section>
+				<ul>
+					<li>Получить пачку сообщений</li>
+					<li>Часть из них сохранить</li>
+					<li>Для каждого сообшения дать возможность ответить в соцсеть</li>
+					<li>Принять возможный ответ на наш ответ</li>
+				</ul>
+			</section>
+			<section>
+				<p>Для каждой соцсети имплементировать OAuth протокол</p>
+				<p>Сохранить полученные access_key</p>
+				<aside class="notes">
+					Программисту придется изучить как работает протокол OAuth
+				</aside>
+			</section>
+		</section>
+
+		<section>
+			<section>
+				<ul>
+					<li>Apache Kafka</li>
+					<li>Django</li>
+					<li>Celery</li>
+				</ul>
+			</section>
+			<section>
+				<p>До 1000-3000 входящих сообщений в секунду</p>
+			</section>
+			<section>
+				<ul>
+					<li>Многоступенчатая предварительная фильтрация</li>
+					<span class="fragment">
+						<li>Основные данные для фильтрации в кэш</li>
+					</span>
+					<span class="fragment">
+						<li>Индексы для тех данных, по которым идет фильтрация</li>
+					</span>
+				</ul>
+				<aside class="notes">
+					Как мы справляемся с таким потоком
+				</aside>
+			</section>
+		</section>
+
+		<section>
+			<section>
+				<p>Мы принимаем сообщения из всех основных соцсетей</p>
+			</section>
+			<section>
+				<ul>
+					<li>Facebook</li>
+					<li>VKontakte</li>
+					<li>Twitter</li>
+					<li>Instagram</li>
+					<li>Одноклассники</li>
+				</ul>
+				<aside class="notes">
+					Вся последующая информация исключительно к размышлению
+				</aside>
+			</section>
+		</section>
+
+		<section>
+			<section>
+				<h3>Общие моменты</h3>
+				<ul>
+					<span class="fragment">
+						<li>Рейт-лимиты</li>
+					</span>
+					<span class="fragment">
+						<li>Вэб хуки</li>
+					</span>
+					<span class="fragment">
+						<li>Scope</li>
+					</span>
+				</ul>
+				<aside class="notes">
+					Вэбхуки для разработки - боль. Ngrock, https
+				</aside>
+			</section>
+			<section>
+				<h3>Ограничения</h3>
+				<ul>
+					<span class="fragment">
+						<li>Инстаграм не дает пользоваться api через 1-24 часов после регистрации нового аккаунта без подтверждения телефона</li>
+					</span>
+				</ul>
+			</section>
+		</section>
+
+		<section>
+			Twitter
+			<section>
+				<p>Твиттер няшка</p>
+				<aside class="notes">
+					За исключением одного пункта
+				</aside>
+			</section>
+			<section>
+				<pre>
+					<code class="hljs python" data-trim data-noescape>
+						url = 'https://api.twitter.com/1.1/statuses/update.json'
+						headers = {
+						    'authorization': 'OAuth',
+						    ...
+						}
+						params = {
+						    'status': 'I am at Dev Pro',
+						    'attachment_url': 'https://twitter.com/raymondh'
+						                      '/status/1098662827496067072'
+						}
+						requests.post(url, params=params, headers=headers)
+					</code>
+				</pre>
+				<aside class="notes">
+					Не data, а params
+				</aside>
+			</section>
+
+			<section>
+				<pre>
+					<code class="hljs python" data-trim data-noescape>
+						url = 'https://api.twitter.com/1.1/direct_messages/events/new.json'
+						headers = {
+						    'authorization': 'OAuth',
+						    ...
+						}
+						data = {
+						  "event": {
+							"type": "message_create",
+							"message_create": {
+							  "target": {"recipient_id": "RECIPIENT_USER_ID"},
+							  "message_data": {"text": "Hello World!"}
+							}
+						  }
+						}
+						requests.post(url, data=data, headers=headers)
+					</code>
+				</pre>
+				<aside class="notes">
+					Уже data
+				</aside>
+			</section>
+
+			<section>
+				<p>Бизнес аккаунт</p>
+				<img data-src="img/dev.pro/countries.png">
+				<aside class="notes">
+					Можно выбрать соседние страны или что-нибудь экзотическое (Афганистан, страны Африки)
+				</aside>
+			</section>
+		</section>
+
+		<section>
+			Instagram
+			<section>
+				<p>Не круто</p>
+			</section>
+
+			<section>
+				<p>Official api</p>
+				<pre>
+					<code class="hljs plaintext" data-trim>
+						'/users/self' - owner of token
+						'media/{media-id}/comments' - only comments
+					</code>
+				</pre>
+			</section>
+
+			<section>
+				<p>Unofficial api</p>
+				<ul>
+					<li>Неофициально - запросы вытягиваются из браузера</li>
+					<li>Маскируются под конечные устройства</li>
+					<li>Не всегда имплементируют OAuth</li>
+				</ul>
+
+				<aside class="notes">
+					Так как неофициально, то подвержено риску изменений, недоработок, блокировок. нужно следить за обновлением API вручную и пристально
+				</aside>
+			</section>
+			<section>
+				<pre>
+					<code class="hljs python" data-trim>
+						InstagramAPI = InstagramAPI("login", "password")
+						InstagramAPI.login()
+					</code>
+				</pre>
+			</section>
+		</section>
+
+		<section>
+			Facebook
+			<section>
+				<p>Крутяшки, но поначалу сложно</p>
+			</section>
+
+			<section>
+				<p>GraphQL, no other choices</p>
+				<pre>
+					<code class="hljs python" data-trim>
+						url = 'https://graph.facebook.com/v3.2/{object-id}/comments'
+						data = {
+						    'message': 'Hello from Dev Pro',
+						    'access_token': '{your-page-access-token}'
+						}
+						requests.post(url, data=data)
+					</code>
+				</pre>
+			</section>
+
+			<section>
+				<p>Строгая валидация приложений</p>
+				<aside class="notes">
+					Долго. Видео надо записывать.
+				</aside>
+			</section>
+		</section>
+
+		<section>
+			VK
+			<section>
+				<p>Боль</p>
+			</section>
+
+			<section>
+				<p>Самая отвратительная документация</p>
+				<p>Часто не отражает реальную картину</p>
+				<aside class="notes">
+					Параметр может не приниматься. Или называться по другому. Нужно много гуглить.
+					Смотреть исходники библиотек не поможет, они просто прокидывают параметры.
+				</aside>
+			</section>
+
+			<section>
+				<pre>
+					<code class="hljs python" data-trim>
+						url = 'https://api.vk.com/method/wall.createComment'
+						data = {
+						    'owner_id': -39848934,
+						    'post_id': 2482482
+						    'message': 'Hello from Dev Pro',
+						    'access_token': '{ACCESS_TOKEN}',
+						    'v': '5.95'
+						}
+						requests.post(url, data=data)
+					</code>
+				</pre>
+				<aside class="notes">
+					owner_id Положительный - человек, отричательный - сообщество
+				</aside>
+			</section>
+
+			<section>
+				<p>Прикрепить изображение к комментарию</p>
+				<pre>
+					<code class="hljs python" data-trim>
+						requests.get('https://api.vk.com/method/photos.getUploadServer')
+						multipart_form_data = { # до 5 файлов
+						    'file1': ('img1.jpg', open('img1.jpg', 'rb')),
+						    'file2': ('img2.jpg', open('img2.jpg', 'rb')),
+						}
+						request.post(upload, files=multipart_form_data)
+						{
+						"server":123456,
+						"photos_list":"[{\"photo\":\"e9f2eba71b:y\",\"sizes\":[[\"s\",\"123456852\",\"e65f\",\"Br4ir9YAvO8\",75,41],[\"m\",\"123456852\",\"e660\",\"Lqpe1N8s8zY\",130,71],[\"x\",\"123456852\",\"e661\",\"tRFbnaIP_4c\",604,330],[\"y\",\"123456852\",\"e662\",\"8JhBOy0qR6o\",748,409],\"kid\":\"569c3da3b168b347315aa5adc92a953a\",\"debug\":\"xsymyxyyyoypyqyry\"}]",
+						"aid":98754321,
+						"hash":"22b333dbbef7cd9b1f9829b5f8713f86"
+						}
+						requests.get('https://api.vk.com/method/photos.save',
+							params={'server': ..., 'photos_list': ..., 'album_id': 111}
+						)
+					</code>
+				</pre>
+				<aside class="notes">
+					photos_list - json внутри json
+					Это сохранения для комментов. Для фото на стену, в личку попроще.
+					Нужен обязательно альбом. Что произойдет с загруженными, но сохраненными сообщениями - хз
+				</aside>
+			</section>
+			<section>
+				<pre>
+					<code class="hljs" data-trim>
+						"photos_list":"[
+						{
+						\"photo\":\"e9f2eba71b:y\",
+						\"sizes\":[
+							[\"s\",\"123456852\",\"e65f\",\"Br4ir9YAvO8\",75,41],
+							[\"m\",\"123456852\",\"e660\",\"Lqpe1N8s8zY\",130,71],
+							[\"x\",\"123456852\",\"e661\",\"tRFbnaIP_4c\",604,330],
+							[\"y\",\"123456852\",\"e662\",\"8JhBOy0qR6o\",748,409],
+						\"kid\":\"569c3da3b168b347315aa5adc92a953a\",
+						\"debug\":\"xsymyxyyyoypyqyry\"
+						}
+						]"
+					</code>
+				</pre>
+			</section>
+			<section>
+				<pre>
+					<code class="hljs python" data-trim data-noescape>
+					url = 'https://api.vk.com/method/wall.createComment'
+					data = {
+					    'owner_id': -39848934,
+					    'post_id': 2482482
+					    'message': 'Hello from Dev Pro',
+					    'access_token': '{ACCESS_TOKEN}',
+					    'v': '5.95',
+					    'attachments':'{type}{owner_id}_{media_id},photo66748_265827614'
+					}
+					requests.post(url, data=data)
+					</code>
+				</pre>
+				<aside class="notes">
+					Помните, мы загрузили аж до 5 изображений? Если их указать, то сообщение опубликуется без них.
+					Максимум 2. Нигде в документации не указано.
+					Мне сообщили, что в самом интерфейсе тоже нельзя.
+				</aside>
+			</section>
+
+		</section>
+
+		<section>
+			VK
+			<section>
+				<p>Публикация от имени сообщества</p>
+				<pre>
+					<code class="hljs python" data-trim>
+						url = 'https://api.vk.com/method/wall.createComment'
+						data = {
+						    'owner_id': -39848934,
+						    'post_id': 2482482,
+						    'from_group': 1
+						}
+						requests.post(url, data=data)
+					</code>
+				</pre>
+				<aside class="notes">
+					Сначала можно было публиковать только на стене самого сообщества
+				</aside>
+			</section>
+
+			<section>
+				<img data-src="img/dev.pro/rkn.png">
+			</section>
+			<section>
+				<img data-src="img/dev.pro/pornhub.jpg">
+			</section>
+
+			<section>
+				<pre>
+					<code class="hljs python" data-trim>
+						url = 'https://api.vk.com/method/wall.createComment'
+						data = {
+						    'owner_id': -39848934,
+						    'post_id': 2482482,
+						    'from_group': -{group_id}
+						}
+						requests.post(url, data=data)
+					</code>
+				</pre>
+				<aside class="notes">
+					'from_group': 0 и 1 остались
+					человеку написать нельзя, и даже ошибки не выдаст
+				</aside>
+			</section>
+		</section>
+
+		<section>
+			VK. Проблема с api ключами
+			<section>
+				<ul>
+					<li>Оставить комментарий на публикацию</li>
+					<li>Получить по вебхуку личное сообщение</li>
+					<li>Ответить на личное сообщение</li>
+				</ul>
+			</section>
+			<section>
+				<p>Получение обычного токена</p>
+				<pre>
+					<code class="hljs python" data-trim>
+						https://oauth.vk.com/authorize?scope=photos,messages,wall
+						&client_id=1&redirect_uri=http://example.com/callback
+					</code>
+				</pre>
+			</section>
+			<section>
+				<p>Получение токена для группы</p>
+				<pre>
+					<code class="hljs python" data-trim data-line-numbers="2-3">
+						https://oauth.vk.com/authorize?client_id=1&redirect_uri=http://example.com/callback
+						&scope=photos,messages
+						&group_ids=234,8494
+					</code>
+				</pre>
+				<aside class="notes">
+					Еще надо узнать айди групп, где человек админ
+				</aside>
+			</section>
+			<section>
+				<p>Используя ключ для групп мы можем</p>
+				<ul>
+					<li>Оставить комментарий на публикацию<span class="fragment"> - нет</span></li>
+					<li>Получить по вебхуку личное сообщение<span class="fragment"> - да</span></li>
+					<li>Ответить на личное сообщение<span class="fragment"> - да</span></li>
+				</ul>
+			</section>
+			<section>
+				<img data-src="img/dev.pro/wat.jpg">
+				<aside class="notes">
+					Клиент пожелал отвечать одновременно в личку и на стену
+					Есть сторис
+				</aside>
+			</section>
+		</section>
+
+		<section>
+			Одноклассники
+			<section>
+				<p>Самое бедное api</p>
+				<p><span class="fragment">Пришлось использовать Selenium</span></p>
+				<aside class="notes">
+					Ну и баги, как без них
+				</aside>
+			</section>
+
+			<section>
+				<p>Можно добавить несколько вебхуков</p>
+				<p>но метод https://apiok.ru/dev/graph_api/methods
+					/graph.user/graph.user.subscriptions/get</p>
+				<p>всегда выдаст только один</p>
+			</section>
+
+			<section>
+				<p>* Приходит сообщение по вебхуку *</p>
+				<p class="fragment">* В сообщении есть прикрепленные файлы *</p>
+				<p class="fragment">* Выглядит примерно так 'image_urls': [None] *</p>
+				<aside class="notes">
+					Этому багу несколько лет. Писали разработчикам, обещали поправить. Насколько знаю, еще не исправлено.
+				</aside>
+			</section>
+
+			<section>
+				<p>Разная верстка для разных браузеров. А у нас Selenium.</p>
+			</section>
+		</section>
+
+		<section>
+			<p>Несколько общих правил</p>
+			<ul>
+				<li class="fragment">api соцсетей постоянно меняются</li>
+				<li class="fragment">правила соцсетей постоянно меняются</li>
+			</ul>
+		</section>
+
+		<section>
+			Мораль
+		</section>
+
+	</div>
+</div>
+
+<script src="js/reveal2.js"></script>
+
+<script>
+	// More info about config & dependencies:
+	// - https://github.com/hakimel/reveal.js#configuration
+	// - https://github.com/hakimel/reveal.js#dependencies
+	Reveal.initialize({
+		                  controls: true,
+		                  progress: true,
+		                  history: true,
+		                  center: true,
+		                  transition: 'slide', // none/fade/slide/convex/concave/zoom
+		                  // parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
+		                  // More info https://github.com/hakimel/reveal.js#dependencies
+		                  dependencies: [
+			                  {
+				                  src: 'lib/js/classList.js', condition: function () {
+					                  return !document.body.classList;
+				                  }
+			                  },
+			                  {
+				                  src: 'plugin/markdown/marked.js', condition: function () {
+					                  return !!document.querySelector('[data-markdown]');
+				                  }
+			                  },
+			                  {
+				                  src: 'plugin/markdown/markdown.js', condition: function () {
+					                  return !!document.querySelector('[data-markdown]');
+				                  }
+			                  },
+			                  {
+				                  src: 'plugin/highlight/highlight.js', async: true, callback: function () {
+					                  hljs.initHighlightingOnLoad();
+				                  }
+			                  },
+			                  {src: 'plugin/search/search.js', async: true},
+			                  {src: 'plugin/zoom-js/zoom.js', async: true},
+			                  {src: 'plugin/notes/notes.js', async: true}
+		                  ]
+	                  });
+</script>
+</body>
+</html>
