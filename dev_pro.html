@@ -52,9 +52,14 @@
 				<ul>
 					<li>Получить пачку сообщений</li>
 					<li>Часть из них сохранить</li>
-					<li>Для каждого сообшения дать возможность ответить в соцсеть</li>
+					<li>Для каждого сообщения дать возможность ответить в соцсеть</li>
 					<li>Принять возможный ответ на наш ответ</li>
 				</ul>
+				<aside class="notes">
+					Зачем нам вообще все это?
+					У бизнеса есть много потоков сообщений из соцсетей. Нам сводит все сообщения в один поток разбитые на так называемые темы.
+					Хочет предоставлять своим клиентам возможность реагирования на определенные темы.
+				</aside>
 			</section>
 			<section>
 				<p>Для каждой соцсети имплементировать OAuth протокол</p>
@@ -130,6 +135,8 @@
 				<aside class="notes">
 					Вэбхуки для разработки - боль. Ngrock, https
 					Инстаграм не дает пользоваться api через 1-24 часов после регистрации нового аккаунта без подтверждения телефона
+
+					Меняется скоуп, меняются и все ключи. Мы так и делали.
 				</aside>
 			</section>
 			<!--<section>-->
@@ -159,7 +166,7 @@
 						    ...
 						}
 						params = {
-						    'status': 'I am at Dev Pro',
+						    'status': 'I am at DevPRO',
 						    'attachment_url': 'https://twitter.com/raymondh'
 						                      '/status/1098662827496067072'
 						}
@@ -255,7 +262,7 @@
 					<code class="hljs python" data-trim>
 						url = 'https://graph.facebook.com/v3.2/{object-id}/comments'
 						data = {
-						    'message': 'Hello from Dev Pro',
+						    'message': 'Hello from DevPRO',
 						    'access_token': '{your-page-access-token}'
 						}
 						requests.post(url, data=data)
@@ -293,7 +300,7 @@
 						data = {
 						    'owner_id': -39848934,
 						    'post_id': 2482482
-						    'message': 'Hello from Dev Pro',
+						    'message': 'Hello from DevPRO',
 						    'access_token': '{ACCESS_TOKEN}',
 						    'v': '5.95'
 						}
@@ -357,7 +364,7 @@
 					data = {
 					    'owner_id': -39848934,
 					    'post_id': 2482482
-					    'message': 'Hello from Dev Pro',
+					    'message': 'Hello from DevPRO',
 					    'access_token': '{ACCESS_TOKEN}',
 					    'v': '5.95',
 					    'attachments':'{type}{owner_id}_{media_id},photo66748_265827614'
@@ -525,6 +532,7 @@
 		                  progress: true,
 		                  history: true,
 		                  center: true,
+		                  slideNumber: true,
 		                  transition: 'slide', // none/fade/slide/convex/concave/zoom
 		                  // parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
 		                  // More info https://github.com/hakimel/reveal.js#dependencies
